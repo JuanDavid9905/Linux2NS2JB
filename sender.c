@@ -98,7 +98,7 @@ static int encode(unsigned char c, Stroke *out) {
     if (c >= 'A' && c <= 'Z') { out->key = 4 + c - 'A'; return 1; }
     if (c >= '1' && c <= '9') { out->key = 30 + c - '1'; return 1; }
     if (c == '0') { out->key = 39; return 1; }
-    if (c == '\n') { out->key = 40; return 1; }
+    if (c == '\r' || c == '\n') { out->key = 40; return 1; }
     if (c == '\t') { out->key = 43; return 1; }
     if (c == ' ') { out->key = 44; return 1; }
     const char *unshifted = "-=[]\\;',./`";
@@ -144,7 +144,7 @@ static int write_report(libusbd_ctx_t *ctx, uint8_t iface,
         int32_t r = usb_write_once(ctx, iface, endpoint, report, 250);
         if (r >= 0) return 0;
         if (r == LIBUSBD_TIMEOUT && attempt == 0) { usb_retries++; continue; }
-        fprintf(stderr, "USB write failed: 0x%08x%s\\n", (unsigned)r,
+        fprintf(stderr, "USB write failed: 0x%08x%s\n", (unsigned)r,
                 r == LIBUSBD_NOT_ENUMERATED ? " (device disconnected)" : "");
         return -1;
     }
@@ -160,10 +160,10 @@ static void release_all_keys(libusbd_ctx_t *ctx, uint8_t iface, uint64_t endpoin
         if (r >= 0) return;
         if (r == LIBUSBD_NOT_ENUMERATED) break;
     }
-    fprintf(stderr, "Warning: could not confirm key release; reconnect cable if a key repeats.\\n");
+    fprintf(stderr, "Warning: could not confirm key release; reconnect cable if a key repeats.\n");
 }
 static int send_stroke(libusbd_ctx_t *ctx, uint8_t iface, uint64_t ep,
-                       uint8_t mods, uint8_t key, int delay_ms) {
+                        uint8_t mods, uint8_t key, int delay_ms) {
     if (write_report(ctx,iface,ep,mods,key)<0 ||
         write_report(ctx,iface,ep,0,0)<0) return -1;
     strokes_sent++;
